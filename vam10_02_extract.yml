@@ -1,0 +1,231 @@
+
+---
+metadata:
+  title: |
+    VAM1_1_0
+  short title: |
+    VAM1
+  description: |
+    Notice of commencement of moratorium
+  tags:
+    - Insolvency
+  sessions are unique: True
+  error action: on_error 
+  error help: | 
+    We are sorry.
+    An error has occurred.
+    Please contact
+    Richard Copley(mailto:enquiries@anaxas.co.uk).  
+  authors:
+    - name: Richard Copley
+      organization: Anaxas
+  revision_date: 2020-06-18
+---
+objects:
+  - company: DAObject
+  - nominee: DAObject
+  - nominee2: DAObject
+  - presenter: DAObject
+  - signature: DAObject
+  - moratorium: DAObject
+  - court: DAObject
+---
+modules:
+  - .conum
+  - .coname
+  - .nomname
+  - .nomdata
+  - .pcode
+  - .nom2name
+  - .nom2data
+  - .p2code
+  - .ctname
+  - .mordate
+  - .sigdate
+  - .pconame
+  - .presname
+  - .presdata
+  - .prespcode
+  - .dmerge
+---
+features:
+  javascript: green.js
+  css: my-styles.css
+---
+auto terms:
+  moratorium: |
+    A suspension of activity or prevailing law for a given period.
+---
+id: intro_scr
+mandatory: True
+field: intro_screen
+question: Welcome to the interview.
+subquestion: |
+  Greetings. In this interview we will ask you some questions that will allow us to complete a VAM1 form, and give notice of a **{moratorium}**.
+  
+  Guidance notes are on each screen. In addition, any field prompt that appears in <span class="grntxt"></span> text can be clicked on for further guidance, usually about formatting. Help prompts in <span class="yelltxt"></span> may also appear in the bar at the top of the screen.
+  
+  Any text that is in <span class="dgtxt"></span> (as above) can be clicked on for a definition of the term. 
+  
+  Fields marked with a <span class="redtxt"></span> asterisk must be answered. Fields without the asterisk are optional.
+  
+  When you are ready to start the interview, please press **Continue**.
+  
+---
+question: |
+  First, some questions about your company.
+subquestion: |
+  Please answer each of the following questions
+fields:
+  - Company number?: company.number
+    datatype: integer
+  - The full company name?: company.name
+validation code: |
+  if len(str(company.number)) != 8:
+    validation_error("Company number must have eight digits")
+---
+code: |
+  numdict = conum(company.number)
+  namedict = coname(company.name)
+---
+question: |
+  Please complete the following information for the main nominee.
+fields:
+  - First name: nominee.fname
+  - Middle name(s): nominee.mname
+    required: false
+  - Surname: nominee.lname
+  - Building name/number?: nominee.bnumber
+  - Street address, first line?: nominee.s1
+  - Street address, second line?: nominee.s2
+    required: false
+  - Post town?: nominee.town
+  - County/region?: nominee.county
+  - Post code?: nominee.pcode
+  - Country?: nominee.country
+    default: UK
+validation code: |
+   if len(nominee.pcode) < 6 or len(nominee.pcode) > 8:
+    validation_error("Post code must have between 6 and 8 characters, incuding a space in the middle")
+---
+code: |
+  nomnamedict = nomname(nominee.fname, nominee.mname, nominee.lname)
+  nomdict = nomdata(nominee.bnumber, nominee.s1, nominee.s2, nominee.town, nominee.county, nominee.country)
+  pcdict = pcode(nominee.pcode)
+---
+question: |
+  Is there a second nominee?
+yesno: secondnominee
+---
+if:
+  secondnominee
+question: |
+  Please complete the following information for the second nominee.
+fields:
+  - First name: nominee2.fname
+  - Middle name(s): nominee2.mname
+    required: false
+  - Surname: nominee2.lname
+  - Building name/number?: nominee2.bnumber
+  - Street address, first line?: nominee2.s1
+  - Street address, second line?: nominee2.s2
+    required: false
+  - Post town?: nominee2.town
+  - County/region?: nominee2.county
+  - Post code?: nominee2.pcode
+  - Country?: nominee2.country
+    default: UK
+validation code: |
+   if len(nominee2.pcode) < 6 or len(nominee2.pcode) > 8:
+    validation_error("Post code must have between 6 and 8 characters, incuding a space in the middle")
+---
+code: |
+  nom2namedict = nom2name(nominee2.fname, nominee2.mname, nominee2.lname)
+  nom2dict = nom2data(nominee2.bnumber, nominee2.s1, nominee2.s2,nominee2.town, nominee2.county, nominee2.country)
+  pc2dict = p2code(nominee2.pcode)
+---
+if:
+  not secondnominee
+code: |
+  nominee2.fname = " "
+  nominee2.mname = " "
+  nominee2.lname = " "
+  nominee2.bnumber = " "
+  nominee2.s1 = " "
+  nominee2.s2  = " "
+  nominee2.town = " "
+  nominee2.county = " "
+  nominee2.country = " "
+  nominee2.pcode = "      "
+  nom2namedict = nom2name(nominee2.fname, nominee2.mname, nominee2.lname)
+  nom2dict = nom2data(nominee2.bnumber, nominee2.s1, nominee2.s2, nominee2.town, nominee2.county, nominee2.country)
+  pc2dict = p2code(nominee2.pcode)
+---
+question: |
+  Some questions on the moratorium.
+subquestion: |
+  Please answer each of the following questions
+fields:
+  - With which court were the documents filed?: court.name
+  - On which date did the moratorium come into force?: moratorium.date
+    datatype: date
+  - On which date will the VAM1 form be signed by the nominee?: signature.date
+    datatype: date
+validation code: |
+   if moratorium.date > today():
+     validation_error("Moratorium date can't be in the future")
+   if signature.date < today():
+     validation_error("Signature date can't be in the past")
+---
+code: |
+  courtdict = ctname(court.name)
+  y = year_of(moratorium.date)
+  m = month_of(moratorium.date)
+  d = day_of(moratorium.date)
+  mordatedict = mordate(d,m,y)
+  sy = year_of(signature.date)
+  sm = month_of(signature.date)
+  sd = day_of(signature.date)
+  sdatedict = sigdate(sd,sm,sy)
+---
+question: |
+  Finally, some questions on the presenter of the form to Companies House.
+fields:
+  - Company name?: presenter.coname
+  - First name?: presenter.fname
+  - Middle name(s)?: presenter.mname
+    required: false
+  - Last name?: presenter.lname
+  - Address - building name/number?: presenter.s1
+  - Street address, first line?: presenter.s2
+  - Street address, second line?: presenter.s3
+    required: false
+  - Post town?: presenter.town
+  - County/region?: presenter.county
+  - Post code?: presenter.pcode
+  - Country?: presenter.country
+    default: UK
+  - Telephone number: presenter.telno
+  - DX number (if any): presenter.dxno
+    required: false
+---
+code: |
+  pconamedict = pconame(presenter.coname)
+  presnamedict = presname(presenter.fname, presenter.mname, presenter.lname)
+  presdatadict = presdata(presenter.s1, presenter.s2, presenter.s3, presenter.town, presenter.county, presenter.country, presenter.telno, presenter.dxno)
+  prespcodedict = prespcode(presenter.pcode)
+---
+mandatory: True
+question: Here is your document.
+subquestion: |
+  The presenter's telno is ${ pdffields["Presenters telephone number"] }
+attachment:
+  name: VAM1_1_0
+  filename: pdftest
+  pdf template file: VAM1_1_0.pdf
+  code: pdffields
+---
+code: |
+  pdffields = dmerge(numdict, namedict, nomnamedict, nomdict, pcdict, nom2namedict, nom2dict, pc2dict, courtdict, mordatedict, sdatedict, pconamedict, presnamedict, presdatadict, prespcodedict)
+  
+  
